@@ -1,4 +1,4 @@
-# IZTECH RUN
+# IZTECH RUN v2
 
 İYTE Yazılım için Python temalı, sessiz bir kampüs koşusu. HTML, CSS ve Canvas 2D ile çalışır; kurulum veya derleme bağımlılığı yoktur.
 
