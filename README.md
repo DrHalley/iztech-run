@@ -1,4 +1,4 @@
-# IZTECH RUN v2
+# IZTECH RUN
 
 İYTE Yazılım için Python temalı, sessiz bir kampüs koşusu. HTML, CSS ve Canvas 2D ile çalışır; kurulum veya derleme bağımlılığı yoktur.
 
@@ -18,7 +18,7 @@ Ardından http://localhost:8000 adresini açın. Oyun Python ile yazılmamışt�
 - Space / ↑: zıpla. ↓ / S: eğil. F: ateş et. Esc: duraklat. Mobilde ekran düğmeleri bulunur.
 - Öğrenci 3 can ve 10 şarj ile başlar. Atış 1 şarj harcar; powerbank 2 şarj yeniler (üst sınır 10).
 - Kahve 1 can yeniler (üst sınır 3). Yerdeki kahvenin üzerinden zıplanırsa toplanmaz.
-- Yalnızca bug'lar vurulabilir. Her 2.500 puanda gece/gündüz değişir: 0–2499 gündüz, 2500–4999 gece, 5000–7499 gündüz. Gündüz sınavlar, gece domuzlar ve eğilerek geçilen sinekler çıkar. Bug'lar her iki evrede de bulunur.
+- Yalnızca bug'lar vurulabilir. Her 1.200 puanda gece/gündüz değişir: 0–2499 gündüz, 1200–4999 gece, 2400–7499 gündüz. Gündüz sınavlar, gece domuzlar ve eğilerek geçilen sinekler çıkar. Bug'lar her iki evrede de bulunur.
 - Mermi küçük bir `"damage"` yazısıdır; terminal `print("damage")` gösterir.
 - Dil TR/EN düğmeleriyle değişir. Dil, karakter tercihi ve rekor bu tarayıcıda saklanır.
 - Gece sokak lambaları yolu aydınlatır; camlı bekleme alanı ve kırmızı bank seyrek aralıklarla görünür. Kız öğrenci sarı saçlı ve beyaz-bordo IZTECH sweatshirtlü, erkek öğrenci kısa saçlı ve koyu gri sweatshirtlüdür.
@@ -96,7 +96,7 @@ Gece ışıkları her gece yeniden dağıtılır ve gece boyunca sabit kalır. D
 
 - Gece/gündüz aydınlığı yaklaşık 10 saniyede geçiş yapar. Ekrandaki şenlik, alana girildiğindeki konser/stant görünümünü çıkana kadar korur.
 - Mekânlar arasında boşluk vardır; aynı mekândan önce en az üç farklı mekân gösterilir.
-- Her 5.000 skorda hedef hız artar.
+- Her 2.400 skorda hedef hız artar.
 - 2, 3 ve 4 kişilik NPC gruplarında tüm kız–erkek dizilimleri bulunur.
 - Mobil düğmelerde basılı tutma korunur; metin seçimi ve uzun basma menüsü engellenir. Gerçek iPhone/Safari doğrulaması ayrıca yapılmalıdır.
 
@@ -112,3 +112,5 @@ Resmi kaynak: https://vercel.com/kb/guide/is-sqlite-supported-in-vercel
 
 ## IZTECH RUN arayüz güncellemesi
 Topluluk logosu, kalıcı açık/koyu tema, animasyonlu karakter seçimi ve yerel rekor sonuç ekranı eklendi. Oyun yalnızca tarayıcıda çalışır; backend planı iptal edildi. Vercel için repo kökünü kullanın; vercel.json dist klasörünü sunar.
+
+Tempo: başlangıç 330 px/sn; temel hız zamanla 560 px/sn seviyesine çıkar. Her 2400 skorda hedef hıza 50 px/sn eklenir. Gündüz/gece 1200 skorda değişir; 10 saniyelik ışık geçişi korunur. Engel aralığı en az 1 saniyedir.
