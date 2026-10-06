@@ -61,7 +61,7 @@
     for(const type of ['exam','quiz','boar','fly','bug','supplies']){
       const c=$('#rule-'+type),cx=c.getContext('2d'),a=createArt(cx);cx.clearRect(0,0,150,125);cx.imageSmoothingEnabled=false;
       if(type==='supplies'){a.coffee({x:26,y:66},0,t());a.powerbank({x:96,y:66},0,t());}
-      else a.obstacle({type:type==='exam'?'block':type,x:type==='quiz'?23:32,y:(type==='quiz'?8:48)+Math.sin(anim*3)*3,w:type==='quiz'?104:86,h:type==='quiz'?108:62,reveal:1,course:'MATH141',exam:'exam'},anim,t());
+      else a.obstacle({type:type==='exam'?'block':type,x:type==='quiz'?23:32,y:(type==='quiz'?8:48)+Math.sin(anim*3)*3,w:type==='quiz'?104:86,h:type==='quiz'?71:62,reveal:1,course:'MATH141',exam:'exam'},anim,t());
     }
   }
   function showRules(){rulesOpen=true;$('#rulesSummary').textContent=mode==='over'?t().summary(score(),kills,collected):'';drawRules();$('#rulesDialog').showModal?.();$('#rulesContinue').focus();}
@@ -76,14 +76,14 @@
     overlay();log('runLog');hud();canvas.focus({preventScroll:true});
   }
   function pause(){
-    if(mode==='running'){mode='paused';duck=false;overlay();}
+    if(mode==='running'){mode='paused';duck=false;player.crouch=0;overlay();}
     else if(mode==='paused'){mode='running';overlay();canvas.focus({preventScroll:true});}
   }
   function end(){
     mode='over';newRecord=score()>best;if(newRecord){$('#confetti').innerHTML=Array.from({length:24},(_,i)=>'<i style="--x:'+((i*37)%100)+'%;--delay:'+((i%6)*.1)+'s;--color:'+(['#ff8c2a','#fff','#eb5573'][i%3])+'"></i>').join('');}best=Math.max(best,score());storage.set('iyte-bug-run-best',best);hud();overlay();log('endLog');$('#start').focus();
     window.dispatchEvent(new CustomEvent('iyte:run-complete',{detail:{score:score(),bugs:kills,coffees:collected,distance:Math.floor(distance/12),duration:Math.round(time)}}));
   }
-  function jump(){if(mode==='running'&&player.y>=339){duck=false;player.vy=-680;}}
+  function jump(){if(mode==='running'&&player.y>=339){duck=false;player.crouch=0;player.vy=-680;}}
   function fire(){if(mode!=='running'||shotCD>0)return;if(charge===0){log('emptyLog');return;}charge--;shotCD=.28;hud();bullets.push({x:player.x+74,y:player.y-(duck?19:42),w:30,h:9});log('>>> print("damage")');}
   $('#chooseAgain').onclick=()=>{mode='ready';$('#confetti').innerHTML='';overlay();};
   $('#restartPaused').onclick=start;
@@ -106,15 +106,15 @@
   function touch(id,down,up){const b=$(id);for(const event of ['contextmenu','selectstart','dragstart'])b.addEventListener(event,e=>e.preventDefault());b.addEventListener('pointerdown',e=>{e.preventDefault();b.setPointerCapture(e.pointerId);down();});for(const event of ['pointerup','pointercancel','lostpointercapture'])b.addEventListener(event,()=>up?.());}
   touch('#jumpTouch',jump);touch('#fireTouch',fire);touch('#duckTouch',()=>{if(mode==='running')duck=true;},()=>duck=false);
   function hit(a,b){return a.x<b.x+b.w&&a.x+a.w>b.x&&a.y<b.y+b.h&&a.y+a.h>b.y;}
-  function playerBox(){const crouch=duck&&player.y===340;return {x:player.x+2,y:player.y-(crouch?31:73),w:crouch?48:34,h:crouch?30:71};}
+  function playerBox(){const crouch=duck&&player.y===340;return {x:player.x+2,y:player.y-(crouch?70:79),w:crouch?48:34,h:crouch?69:77};}
   function spawnItem(){
     spawnIndex++;
     // A coffee occupies a full obstacle slot, so it cannot be hidden in an exam or boar.
     if(spawnIndex%6===0){coffees.push({x:canvas.width+60,y:309,w:32,h:31});return;}
     if(spawnIndex%6===4){powerbanks.push({x:canvas.width+60,y:309,w:30,h:31});return;}
     const type=spawnIndex%6===2?'bug':night?(Math.random()<.5?'boar':'fly'):(spawnIndex%6===5?'quiz':'block');
-    obstacles.push({type,x:canvas.width+60,reveal:0,y:type==='quiz'?195:type==='fly'?276:type==='bug'?305:type==='boar'?302:278,
-      w:type==='quiz'?104:type==='fly'?72:type==='bug'?40:type==='boar'?63:91,h:type==='quiz'?108:type==='fly'?27:type==='bug'?35:type==='boar'?38:62,
+    obstacles.push({type,x:canvas.width+60,reveal:0,y:type==='quiz'?195:type==='fly'?239:type==='bug'?305:type==='boar'?302:278,
+      w:type==='quiz'?104:type==='fly'?72:type==='bug'?40:type==='boar'?63:91,h:type==='quiz'?71:type==='fly'?27:type==='bug'?35:type==='boar'?38:62,
       course:courses[Math.floor(Math.random()*courses.length)],exam:Math.random()<.7?'exam':'final'});
     if(type==='fly')log('flyLog');if(type==='bug')log('bugLog');if(type==='boar')log('boarLog');
   }
@@ -129,7 +129,7 @@
     syncPhase(dt);
     const wasAirborne=player.y<340;player.vy+=1850*dt;player.y=Math.min(340,player.y+player.vy*dt);if(player.y===340){player.vy=0;if(wasAirborne)player.landing=.16;}
     player.landing=Math.max(0,(player.landing||0)-dt);
-    const crouchTarget=duck&&player.y===340?1:0;player.crouch=(player.crouch||0)+(crouchTarget-(player.crouch||0))*Math.min(1,dt*28);
+    const crouchTarget=duck&&player.y===340?1:0;const currentCrouch=player.crouch||0;player.crouch=currentCrouch+Math.sign(crouchTarget-currentCrouch)*Math.min(Math.abs(crouchTarget-currentCrouch),dt*12);
     spawn-=dt;if(spawn<=0){spawnItem();spawn=Math.max(440+Math.random()*160,speed*1.0)/speed;}
     for(const o of obstacles){o.x-=speed*dt;if(o.type==='quiz'&&o.x-player.x<=Math.min(canvas.width-player.x-30,speed*1.7)){if(!o.reveal)log('quizLog');o.reveal=Math.min(1,(o.reveal||0)+dt/.32);}}for(const c of coffees)c.x-=speed*dt;for(const p of powerbanks)p.x-=speed*dt;for(const b of bullets)b.x+=860*dt;
     for(const b of bullets)for(const o of obstacles)if(o.type==='bug'&&!o.dead&&!b.dead&&hit(b,o)){
