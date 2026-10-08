@@ -83,7 +83,7 @@
     mode='over';newRecord=score()>best;if(newRecord){$('#confetti').innerHTML=Array.from({length:24},(_,i)=>'<i style="--x:'+((i*37)%100)+'%;--delay:'+((i%6)*.1)+'s;--color:'+(['#ff8c2a','#fff','#eb5573'][i%3])+'"></i>').join('');}best=Math.max(best,score());storage.set('iyte-bug-run-best',best);hud();overlay();log('endLog');$('#start').focus();
     window.dispatchEvent(new CustomEvent('iyte:run-complete',{detail:{score:score(),bugs:kills,coffees:collected,distance:Math.floor(distance/12),duration:Math.round(time)}}));
   }
-  function jump(){if(mode==='running'&&player.y>=339){duck=false;player.crouch=0;player.vy=-680;}}
+  function jump(){if(mode==='running'&&player.y>=339){duck=false;player.vy=-680;}}
   function fire(){if(mode!=='running'||shotCD>0)return;if(charge===0){log('emptyLog');return;}charge--;shotCD=.28;hud();bullets.push({x:player.x+74,y:player.y-(duck?19:42),w:30,h:9});log('>>> print("damage")');}
   $('#chooseAgain').onclick=()=>{mode='ready';$('#confetti').innerHTML='';overlay();};
   $('#restartPaused').onclick=start;
@@ -132,8 +132,28 @@
     const crouchTarget=duck&&player.y===340?1:0;const currentCrouch=player.crouch||0;player.crouch=currentCrouch+Math.sign(crouchTarget-currentCrouch)*Math.min(Math.abs(crouchTarget-currentCrouch),dt*12);
     spawn-=dt;if(spawn<=0){spawnItem();spawn=Math.max(440+Math.random()*160,speed*1.0)/speed;}
     for(const o of obstacles){o.x-=speed*dt;if(o.type==='quiz'&&o.x-player.x<=Math.min(canvas.width-player.x-30,speed*1.7)){if(!o.reveal)log('quizLog');o.reveal=Math.min(1,(o.reveal||0)+dt/.32);}}for(const c of coffees)c.x-=speed*dt;for(const p of powerbanks)p.x-=speed*dt;for(const b of bullets)b.x+=860*dt;
-    for(const b of bullets)for(const o of obstacles)if(o.type==='bug'&&!o.dead&&!b.dead&&hit(b,o)){
-      o.dead=true;b.dead=true;kills++;log('fixLog');for(let i=0;i<12;i++)particles.push({x:o.x+20,y:o.y+15,vx:(Math.random()-.5)*210,vy:-Math.random()*180,life:.5,color:'#82516d'});
+    for(const b of bullets){
+      // Sweep relative motion so fast shots stop at the nearest solid obstacle.
+      const start=b.x-860*dt,travel=(860+speed)*dt;
+      let target=null,first=Infinity;
+      for(const o of obstacles){
+        if(o.dead||(o.type==='quiz'&&!o.reveal)||b.y>=o.y+o.h||b.y+b.h<=o.y)continue;
+        const oldX=o.x+speed*dt;
+        if(start>=oldX+o.w)continue;
+        const contact=Math.max(0,(oldX-start-b.w)/travel);
+        if(contact<=1&&contact<first){first=contact;target=o;}
+      }
+      if(!target)continue;
+      b.dead=true;
+      if(target.type!=='bug'){
+        const impactX=start+860*dt*first+b.w;
+        particles.push({x:impactX,y:b.y+b.h/2,vx:0,vy:0,life:.18,flash:true,color:'#ffd477'});
+        for(let i=0;i<6;i++)particles.push({x:impactX-i*4,y:b.y+b.h/2,vx:-35-Math.random()*70,vy:-65+i*17,life:.9+Math.random()*.2,color:night?'#e7f6bc':'#233e39',glyph:'damage'[i]});
+      }
+      if(target.type==='bug'){
+        target.dead=true;kills++;log('fixLog');
+        for(let i=0;i<12;i++)particles.push({x:target.x+20,y:target.y+15,vx:(Math.random()-.5)*210,vy:-Math.random()*180,life:.5,color:'#82516d'});
+      }
     }
     syncPhase(0); // A bug bonus may cross the threshold in this same tick.
     const p=playerBox();
@@ -144,7 +164,7 @@
     for(const c of coffees)if(!c.dead&&hit(p,c))collect(c);
     for(const b of powerbanks)if(!b.dead&&hit(p,b))collectPowerbank(b);powerbanks=powerbanks.filter(b=>!b.dead&&b.x>-80);
     obstacles=obstacles.filter(o=>!o.dead&&o.x>-120);coffees=coffees.filter(c=>!c.dead&&c.x>-80);bullets=bullets.filter(b=>!b.dead&&b.x<canvas.width+100);
-    for(const p of particles){p.x+=p.vx*dt;p.y+=p.vy*dt;p.vy+=500*dt;p.life-=dt;}particles=particles.filter(p=>p.life>0);
+    for(const p of particles){p.x+=p.vx*dt;p.y+=p.vy*dt;p.vy+=(p.flash?0:p.glyph?70:500)*dt;p.life-=dt;}particles=particles.filter(p=>p.life>0);
     if(toastTime>0){toastTime-=dt;if(toastTime<=0)$('#coffeeToast').textContent='';}hud();
   }
   function syncPhase(dt){
@@ -154,10 +174,10 @@
   }
   function render(){
     ctx.imageSmoothingEnabled=false;zone=art.scene(world,canvas.width,t(),nightBlend,time,lightSeed);$('#zoneName').textContent=t().campus[zone];
-    for(const p of powerbanks)art.powerbank(p,time,t());for(const c of coffees)art.coffee(c,time,t());for(const o of obstacles)art.obstacle(o,time,t());art.student(mode==='ready'?{...selectionPose(340,true),x:player.x}:player,duck,mode==='ready'?previewTime:time,mode==='running',invincible,character,charge);
+    for(const p of powerbanks)art.powerbank(p,time,t());for(const c of coffees)art.coffee(c,time,t());for(const o of obstacles)art.obstacle(o,time,t());art.student(player,duck,time,mode==='running',invincible,character,charge);
     for(const b of bullets){art.txt('"damage"',b.x,b.y+7,9,night?'#e7f6bc':'#233e39');}
     for(const p of particles)art.r(p.x,p.y,5,5,p.color);
-    if(mode==='running'){art.txt((night?t().night:t().day)+' · '+(PHASE_SCORE-score()%PHASE_SCORE),18,29,13,night?'#e2e4bf':'#4b7068');art.txt('LVL '+(1+Math.floor(score()/(PHASE_SCORE*2))),canvas.width-95,29,14,night?'#c9d8c5':'#4b7068');if(invincible>0)art.txt(t().recovering,player.x-35,player.y-97,12,night?'#f5d8ac':'#805344');}
+    if(mode==='running'){art.txt((night?t().night:t().day)+' · '+(PHASE_SCORE-score()%PHASE_SCORE),18,29,13,night?'#e2e4bf':'#4b7068');art.txt('LVL '+(1+Math.floor(score()/5000)),canvas.width-95,29,14,night?'#c9d8c5':'#4b7068');if(invincible>0)art.txt(t().recovering,player.x-35,player.y-97,12,night?'#f5d8ac':'#805344');}
   }
   if(document.modelContext?.registerTool){try{Promise.resolve(document.modelContext.registerTool({name:'read_run_status',description:'Read local run status, score, health, coffee count and language.',inputSchema:{type:'object',properties:{},additionalProperties:false},annotations:{readOnlyHint:true},execute(input){if(!input||typeof input!=='object'||Array.isArray(input)||Object.keys(input).length)throw new Error('Expected an empty object');return {status:mode,score:score(),health:hp,bugs:kills,coffees:collected,deviceBest:best,language:lang,charge,character};}})).catch(()=>{});}catch{}}
   let accumulator=0;
